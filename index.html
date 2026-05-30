@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>최성재 · Pension Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f7f8fa;--bg2:#fff;--bg3:#f0f2f5;--text:#1a1a2e;--text2:#6b7280;--text3:#9ca3af;--border:#e5e7eb;--blue:#2563eb;--bl:#eff6ff;--green:#059669;--gl:#ecfdf5;--red:#dc2626;--rl:#fef2f2;--amber:#d97706;--al:#fffbeb;--purple:#7c3aed;--pl:#f5f3ff;--r:12px;--rs:8px}
+[data-theme=dark]{--bg:#0f1117;--bg2:#1a1d27;--bg3:#252836;--text:#f3f4f6;--text2:#9ca3af;--text3:#6b7280;--border:#2d3148;--bl:#1e3a5f;--gl:#064e3b;--rl:#450a0a;--al:#451a03;--pl:#2e1065}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;transition:background .3s,color .3s}
+.abar{background:linear-gradient(90deg,#1e3a5f,#1e4d8c);color:#e0eaff;font-size:12px;padding:7px 16px;display:flex;align-items:center;gap:8px;line-height:1.5}
+.abar-tag{background:rgba(255,255,255,.18);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;flex-shrink:0}
+.topbar{position:sticky;top:0;z-index:100;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;height:50px;gap:10px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.logo{font-size:13px;font-weight:700;color:var(--blue);white-space:nowrap}
+.logo em{color:var(--text);font-style:normal}
+.nav{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;flex:1}
+.nav::-webkit-scrollbar{display:none}
+.nb{padding:5px 10px;border-radius:var(--rs);border:none;background:none;color:var(--text2);font-size:12px;cursor:pointer;white-space:nowrap;transition:all .15s}
+.nb.on{background:var(--bl);color:var(--blue);font-weight:700}
+.nb:hover:not(.on){background:var(--bg3)}
+.tr{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.dbtn{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--bg3);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center}
+.ubtn{padding:5px 11px;border-radius:var(--rs);border:none;background:var(--green);color:#fff;font-size:12px;cursor:pointer;font-weight:700;white-space:nowrap}
+.layout{display:grid;grid-template-columns:288px 1fr;gap:12px;padding:12px;max-width:1400px;margin:0 auto}
+@media(max-width:860px){.layout{grid-template-columns:1fr}}
+.sidebar{display:flex;flex-direction:column;gap:10px}
+.mc{display:flex;flex-direction:column;gap:10px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.ct{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
+/* 업로드 상태 */
+.ubox{border-radius:var(--rs);padding:9px 12px;font-size:11px;margin-bottom:10px;line-height:1.7;border:1px solid #fcd34d;background:var(--al);color:var(--amber)}
+.ubox.ok{border-color:#6ee7b7;background:var(--gl);color:var(--green)}
+.ubox.err{border-color:#fca5a5;background:var(--rl);color:var(--red)}
+/* 연금 요약 카드 */
+.pension-card{background:var(--pl);border:1px solid #c4b5fd;border-radius:var(--r);padding:12px 14px}
+.pension-card .pt{font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.pension-row{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.pension-pct{font-size:26px;font-weight:800;color:var(--purple);line-height:1}
+.pension-detail{flex:1;font-size:11px;color:var(--text2);line-height:1.6}
+.pension-detail b{color:var(--text)}
+.pbar-wrap{height:6px;background:rgba(124,58,237,.2);border-radius:3px;margin-bottom:6px;overflow:hidden}
+.pbar-fill{height:100%;border-radius:3px;background:var(--purple);transition:width .8s}
+.pension-strategy{font-size:11px;line-height:1.7;color:var(--text2);background:rgba(124,58,237,.06);border-radius:var(--rs);padding:8px 10px}
+/* stat */
+.tnm{font-size:26px;font-weight:800;letter-spacing:-1px;line-height:1;margin-bottom:3px}
+.asub{font-size:10px;color:var(--text3);margin-bottom:8px}
+.bgs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+.bg{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:700}
+.bgu{background:var(--rl);color:var(--red)}.bgg{background:var(--gl);color:var(--green)}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.st{background:var(--bg3);border-radius:var(--rs);padding:8px 10px}
+.sl{font-size:10px;color:var(--text3);margin-bottom:2px}
+.sv{font-size:13px;font-weight:700}
+.pos{color:var(--red)}.neg{color:var(--blue)}
+.atabs{display:flex;gap:3px;margin-bottom:8px;flex-wrap:wrap}
+.at{padding:4px 8px;border-radius:var(--rs);border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:11px;cursor:pointer;font-weight:600;transition:all .15s}
+.at.on{border-color:var(--blue);background:var(--bl);color:var(--blue)}
+.prow{margin-bottom:7px}
+.plbls{display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px}
+.pbar{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.pfill{height:100%;border-radius:3px;background:var(--blue);transition:width .5s}
+.cw{position:relative;height:170px;margin:5px 0}
+.cwl{position:relative;height:200px;margin:5px 0}
+/* table */
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:6px 8px;text-align:left;color:var(--text3);font-weight:600;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none}
+th:hover{color:var(--text)}
+td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg3)}
+.tn{font-weight:700;font-size:12px}
+.ts2{font-size:10px;color:var(--text3)}
+.wb{display:flex;align-items:center;gap:4px}
+.wbar{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;width:44px}
+.wfill{height:100%;background:var(--blue);border-radius:3px}
+/* retire */
+.rsr{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px}
+.rsr label{min-width:88px;color:var(--text2)}
+.rsr input[type=range]{flex:1}
+.rsr .rv{min-width:52px;text-align:right;font-weight:700}
+.rrw{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;margin-bottom:12px}
+.ring{position:relative;width:100px;height:100px;flex-shrink:0}
+.rlab{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.rpct{font-size:20px;font-weight:800}
+.rsub{font-size:9px;color:var(--text3);margin-top:1px}
+.phase-row{display:flex;margin-bottom:10px;border-radius:var(--rs);overflow:hidden;font-size:11px}
+.phase{flex:1;padding:6px 3px;text-align:center;font-weight:700;line-height:1.4}
+.ph1{background:var(--bl);color:var(--blue)}.ph2{background:var(--gl);color:var(--green)}.ph3{background:var(--al);color:var(--amber)}
+.sim-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px}
+.sim-card{background:rgba(124,58,237,.08);border-radius:var(--rs);padding:9px 10px;text-align:center}
+.sim-card .val{font-size:15px;font-weight:800;color:var(--purple)}
+.sim-card .lbl{font-size:10px;color:var(--text2);margin-top:2px;line-height:1.4}
+.sim-card.ok .val{color:var(--green)}.sim-card.warn .val{color:var(--red)}
+.pension-sim{background:var(--pl);border:1px solid #c4b5fd;border-radius:var(--r);padding:12px;margin-top:12px}
+.pst{font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+/* rebal */
+.rar{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
+.rar:last-child{border-bottom:none}
+.ap{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800}
+.pbuy{background:var(--rl);color:var(--red)}.psell{background:var(--bl);color:var(--blue)}.pok{background:var(--gl);color:var(--green)}
+/* div */
+.ds{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+@media(max-width:600px){.ds{grid-template-columns:1fr 1fr}}
+.dsc{background:var(--gl);border-radius:var(--rs);padding:8px;text-align:center}
+.dsc .v{font-size:13px;font-weight:800;color:var(--green)}
+.dsc .l{font-size:10px;color:var(--text2);margin-top:1px}
+.tg2{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px;flex-wrap:wrap}
+.tgl{position:relative;width:32px;height:18px}
+.tgl input{opacity:0;width:0;height:0}
+.ttrack{position:absolute;cursor:pointer;inset:0;background:var(--border);border-radius:20px;transition:.3s}
+.ttrack:before{content:'';position:absolute;width:12px;height:12px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+input:checked+.ttrack{background:var(--green)}
+input:checked+.ttrack:before{transform:translateX(14px)}
+/* report */
+.rb{background:var(--bg3);border-radius:var(--rs);padding:11px;font-size:12px;line-height:1.8;max-height:360px;overflow-y:auto}
+.gbtn{width:100%;padding:9px;border-radius:var(--rs);border:2px dashed var(--border);background:none;color:var(--blue);font-size:12px;font-weight:700;cursor:pointer;margin-top:8px;transition:all .2s}
+.gbtn:hover{background:var(--bl);border-color:var(--blue)}
+/* modal */
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:center;justify-content:center}
+.mo.open{display:flex}
+.md{background:var(--bg2);border-radius:var(--r);padding:20px;width:330px;max-width:92vw}
+.mt{font-size:14px;font-weight:700;margin-bottom:12px}
+.fg{margin-bottom:9px}
+.fg label{font-size:11px;color:var(--text2);display:block;margin-bottom:3px}
+.fg input,.fg select{width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:var(--rs);background:var(--bg3);color:var(--text);font-size:13px}
+.mbs{display:flex;gap:7px;margin-top:12px}
+.mb{flex:1;padding:8px;border-radius:var(--rs);border:none;font-size:12px;font-weight:700;cursor:pointer}
+.mbc{background:var(--bg3);color:var(--text2)}.mbs2{background:var(--blue);color:#fff}
+.dlbtn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;padding:2px 5px}
+.dlbtn:hover{color:var(--red)}
+.tag{font-size:10px;padding:2px 6px;border-radius:4px;font-weight:700}
+.tg-isa{background:var(--bl);color:var(--blue)}.tg-irp{background:var(--gl);color:var(--green)}
+.tg-pension{background:var(--pl);color:var(--purple)}.tg-cma{background:var(--al);color:var(--amber)}
+.footer{text-align:center;padding:18px;font-size:11px;color:var(--text3)}
+</style>
+</head>
+<body>
+
+<!-- 최상단 한 줄 분석 -->
+<div class="abar">
+  <span id="abar-txt" style="flex:1">포트폴리오 분석 중...</span>
+  <span class="abar-tag" id="abar-tag">분석중</span>
+</div>
+
+<div class="topbar">
+  <div class="logo">💰 <em>Pension Dashboard</em></div>
+  <nav class="nav">
+    <button class="nb on" onclick="goP('dashboard')">📊 대시보드</button>
+    <button class="nb" onclick="goP('holdings')">📋 보유종목</button>
+    <button class="nb" onclick="goP('rebalance')">⚖️ 리밸런싱</button>
+    <button class="nb" onclick="goP('dividend')">💵 배당분석</button>
+    <button class="nb" onclick="goP('retire')">🏖️ 노후분석</button>
+    <button class="nb" onclick="goP('report')">🤖 AI리포트</button>
+  </nav>
+  <div class="tr">
+    <button class="ubtn" onclick="document.getElementById('xlsx-file').click()">📂 계좌 업로드</button>
+    <input type="file" id="xlsx-file" accept=".xlsx" style="display:none" onchange="uploadXlsx(event)">
+    <button class="dbtn" onclick="resetAll()" title="데이터 초기화" style="color:var(--red)">🗑️</button>
+    <button class="dbtn" onclick="toggleDark()" id="dico">🌙</button>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="pg-dashboard" class="layout">
+  <div class="sidebar">
+    <div class="card">
+      <div class="ct">💼 총 자산 현황</div>
+      <div class="tnm" id="t-eval">₩0</div>
+      <div class="asub" id="t-date">-</div>
+      <div class="bgs" id="t-bgs"></div>
+      <div class="sg">
+        <div class="st"><div class="sl">투자원금</div><div class="sv" id="t-cost">₩0</div></div>
+        <div class="st"><div class="sl">총 수익금</div><div class="sv pos" id="t-profit">+₩0</div></div>
+        <div class="st"><div class="sl">총 수익률</div><div class="sv pos" id="t-rate">+0%</div></div>
+        <div class="st"><div class="sl">연금 달성률</div><div class="sv" id="t-ppct" style="color:var(--purple)">-</div></div>
+      </div>
+    </div>
+    <div class="pension-card">
+      <div class="pt">🎯 55세 연금수령 분석 (목표: 월 350만원)</div>
+      <div class="pension-row">
+        <div class="pension-pct" id="ps-pct">0%</div>
+        <div class="pension-detail" id="ps-detail">계산 중...</div>
+      </div>
+      <div class="pbar-wrap"><div class="pbar-fill" id="ps-bar" style="width:0%"></div></div>
+      <div class="pension-strategy" id="ps-strategy">전략 분석 중...</div>
+    </div>
+    <div class="card">
+      <div class="ct">🏦 계좌별 현황</div>
+      <div class="atabs">
+        <div class="at on" onclick="selAcct(this,'PENSION')">연금저축</div>
+        <div class="at" onclick="selAcct(this,'IRP')">IRP</div>
+        <div class="at" onclick="selAcct(this,'ISA')">ISA</div>
+        <div class="at" onclick="selAcct(this,'CMA')">종합</div>
+      </div>
+      <div id="acct-det"></div>
+    </div>
+    <div class="card">
+      <div class="ct">🥧 포트폴리오 비중</div>
+      <div class="cw"><canvas id="pie-c"></canvas></div>
+    </div>
+  </div>
+  <div class="mc">
+    <div class="card" id="upload-notice-card">
+      <div class="ubox" id="ubox">
+        📂 <b>계좌 업로드 방법:</b> 삼성증권 앱 → 자산 → 보유종목 → 우측 상단 엑셀 아이콘(📊) 클릭 → 저장된 .xlsx 파일을 상단 <b>[📂 계좌 업로드]</b> 버튼으로 올리면 자동 반영됩니다.
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">📈 계좌별 자산 구성</div>
+      <div class="cwl"><canvas id="acct-c"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ct">📋 보유종목 현황</div>
+      <div class="tw">
+        <table><thead><tr><th>종목</th><th>계좌</th><th>평가금액</th><th>수익률</th><th>비중</th></tr></thead>
+        <tbody id="dash-tb"></tbody></table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">💵 배당 현황</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div class="st"><div class="sl">월 예상 배당</div><div class="sv" id="dd-m" style="color:var(--green)">₩0</div></div>
+        <div class="st"><div class="sl">연 예상 배당</div><div class="sv" id="dd-y" style="color:var(--green)">₩0</div></div>
+        <div class="st"><div class="sl">배당수익률</div><div class="sv" id="dd-r">0%</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HOLDINGS -->
+<div id="pg-holdings" style="display:none;padding:12px">
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="ct" style="margin:0">📋 전체 보유종목</div>
+      <button class="ubtn" onclick="openAdd()" style="background:var(--blue)">+ 종목 추가</button>
+    </div>
+    <div class="tw">
+      <table><thead><tr>
+        <th onclick="srt('name')">종목 ↕</th><th>계좌</th>
+        <th onclick="srt('qty')">수량 ↕</th><th onclick="srt('avg')">평단가 ↕</th>
+        <th onclick="srt('cur')">현재가 ↕</th><th onclick="srt('eval')">평가금액 ↕</th>
+        <th onclick="srt('profit')">수익금 ↕</th><th onclick="srt('rate')">수익률 ↕</th>
+        <th onclick="srt('weight')">비중 ↕</th><th></th>
+      </tr></thead><tbody id="h-tb"></tbody></table>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--text2)">
+      <span>총 <b id="h-cnt">0</b>개 종목</span>
+      <span>합계: <b id="h-tot" style="color:var(--blue)">₩0</b></span>
+    </div>
+  </div>
+</div>
+
+<!-- REBALANCE -->
+<div id="pg-rebalance" style="display:none;padding:12px">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="card">
+      <div class="ct">🎯 목표 비중 설정</div>
+      <p style="font-size:11px;color:var(--text2);margin-bottom:8px">합계가 100%여야 합니다</p>
+      <div id="tgt-inp"></div>
+      <button class="ubtn" onclick="calcRbl()" style="width:100%;margin-top:8px;padding:8px;background:var(--blue)">⚖️ 리밸런싱 계산</button>
+    </div>
+    <div>
+      <div class="card"><div class="ct">📊 리밸런싱 결과</div><div id="rbl-res"><p style="color:var(--text3);padding:16px;text-align:center">← 좌측 입력 후 계산</p></div></div>
+      <div class="card" style="margin-top:12px"><div class="ct">📊 현재 vs 목표</div><div class="cwl"><canvas id="rbl-c"></canvas></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- DIVIDEND -->
+<div id="pg-dividend" style="display:none;padding:12px">
+  <div class="card">
+    <div class="ct">💵 배당금 분석</div>
+    <div class="ds" id="dsum"></div>
+    <div class="tg2">
+      <label class="tgl"><input type="checkbox" id="rei-t" onchange="updDiv()"><span class="ttrack"></span></label>
+      <span>배당 재투자</span>
+      <span style="color:var(--text2);margin-left:6px">배당성장률</span>
+      <input type="range" id="gr-r" min="0" max="20" value="5" step="1" oninput="updDiv()" style="width:90px">
+      <span id="gr-v" style="font-weight:700">5%</span>
+    </div>
+    <div class="cwl" style="height:230px"><canvas id="div-c"></canvas></div>
+    <div style="margin-top:12px"><div class="ct">종목별 배당</div>
+      <div class="tw"><table><thead><tr><th>종목</th><th>계좌</th><th>배당률</th><th>월 배당</th><th>연 배당</th><th>5년 누적</th><th>10년 누적</th></tr></thead>
+      <tbody id="div-tb"></tbody></table></div>
+    </div>
+  </div>
+</div>
+
+<!-- RETIRE -->
+<div id="pg-retire" style="display:none;padding:12px">
+  <div style="display:grid;grid-template-columns:340px 1fr;gap:12px">
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="card">
+        <div class="ct">🏖️ 노후 준비 분석</div>
+        <div class="rsr"><label>현재 나이</label><input type="range" id="r-age" min="20" max="65" value="32" oninput="calcR()"><span class="rv" id="rv-age">32세</span></div>
+        <div class="rsr"><label>은퇴 나이</label><input type="range" id="r-ret" min="40" max="75" value="55" oninput="calcR()"><span class="rv" id="rv-ret">55세</span></div>
+        <div class="rsr"><label>목표 월생활비</label><input type="range" id="r-liv" min="100" max="800" step="10" value="350" oninput="calcR()"><span class="rv" id="rv-liv">350만원</span></div>
+        <div class="rsr"><label>월 투자금</label><input type="range" id="r-mon" min="10" max="500" step="10" value="50" oninput="calcR()"><span class="rv" id="rv-mon">50만원</span></div>
+        <div class="rsr"><label>예상 연 수익률</label><input type="range" id="r-ror" min="3" max="15" step="0.5" value="7" oninput="calcR()"><span class="rv" id="rv-ror">7%</span></div>
+        <div class="rsr"><label>기대 수명</label><input type="range" id="r-life" min="70" max="100" value="85" oninput="calcR()"><span class="rv" id="rv-life">85세</span></div>
+        <div class="rrw" style="margin-top:12px">
+          <div class="ring">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="var(--border)" stroke-width="8"/>
+              <circle id="ring-c" cx="50" cy="50" r="42" fill="none" stroke="var(--blue)" stroke-width="8" stroke-linecap="round" stroke-dasharray="264" stroke-dashoffset="132" transform="rotate(-90 50 50)" style="transition:stroke-dashoffset .8s,stroke .3s"/>
+            </svg>
+            <div class="rlab"><div class="rpct" id="ring-pct">0%</div><div class="rsub">목표달성률</div></div>
+          </div>
+          <div class="sg">
+            <div class="st"><div class="sl">예상 은퇴자산</div><div class="sv" id="r-asset">₩0</div></div>
+            <div class="st"><div class="sl">목표 필요자산</div><div class="sv" id="r-tgt">₩0</div></div>
+            <div class="st"><div class="sl">부족 금액</div><div class="sv neg" id="r-gap">₩0</div></div>
+            <div class="st"><div class="sl">추가 투자 필요</div><div class="sv" id="r-add">₩0/월</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="pension-sim">
+          <div class="pst">🎯 55세 연금수령 시뮬레이션</div>
+          <div class="phase-row">
+            <div class="phase ph1">적립기<br><small id="ph1-yr"></small></div>
+            <div class="phase ph2">수령기<br><small id="ph2-yr"></small></div>
+            <div class="phase ph3">소진<br><small id="ph3-yr"></small></div>
+          </div>
+          <div class="sim-grid" id="sim-cards"></div>
+          <div style="height:160px"><canvas id="sim-c"></canvas></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card"><div class="ct">📈 자산 성장 예측</div><div style="height:300px"><canvas id="ret-c"></canvas></div></div>
+      <div class="card" style="margin-top:12px"><div class="ct">💡 연금 전략 가이드</div><div id="strategy-box"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- REPORT -->
+<div id="pg-report" style="display:none;padding:12px">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="card">
+      <div class="ct">🤖 AI 리포트 요청 문구</div>
+      <p style="font-size:11px;color:var(--text2);margin-bottom:8px">버튼 클릭 → 복사 → <a href="https://claude.ai" target="_blank" style="color:var(--blue)">claude.ai</a> 붙여넣기</p>
+      <div class="rb" id="r-body"><p style="color:var(--text3);text-align:center;padding:16px">아래 버튼을 눌러주세요</p></div>
+      <button class="gbtn" onclick="genRpt()">🤖 리포트 요청 문구 생성</button>
+      <button class="gbtn" id="copy-btn" onclick="cpyRpt()" style="border-color:var(--green);color:var(--green);margin-top:6px" disabled>📋 복사 후 claude.ai 열기</button>
+    </div>
+    <div class="card"><div class="ct">📰 뉴스 (데모)</div><div id="news-box"></div></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="mo" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="md">
+    <div class="mt" id="modal-title">종목 추가</div>
+    <input type="hidden" id="m-id">
+    <div class="fg"><label>계좌</label><select id="m-acct"><option value="PENSION">연금저축CMA</option><option value="IRP">IRP</option><option value="ISA">ISA</option><option value="CMA">종합(비대면)</option></select></div>
+    <div class="fg"><label>티커/코드</label><input id="m-tkr" placeholder="예: QQQM 또는 005930"></div>
+    <div class="fg"><label>종목명</label><input id="m-nm" placeholder="예: 삼성전자"></div>
+    <div class="fg"><label>보유수량</label><input id="m-qty" type="number" placeholder="0"></div>
+    <div class="fg"><label>평균 매수가</label><input id="m-avg" type="number" step="0.01"></div>
+    <div class="fg"><label>현재가</label><input id="m-cur" type="number" step="0.01"></div>
+    <div class="fg"><label>통화</label><select id="m-curt"><option value="KRW">원화(KRW)</option><option value="USD">달러(USD)</option></select></div>
+    <div class="fg"><label>연 배당수익률(%)</label><input id="m-div" type="number" step="0.1" placeholder="0"></div>
+    <div class="mbs"><button class="mb mbc" onclick="closeModal()">취소</button><button class="mb mbs2" onclick="saveH()">저장</button></div>
+  </div>
+</div>
+
+<div class="footer">My Pension & Dividend Dashboard · 개인 투자 참고용 · 투자 조언이 아닙니다</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// 기본 데이터 (삼성증권 2026.05.30 실제 데이터)
+// ═══════════════════════════════════════════════
+const INIT_H = [
+  // 모든 금액 = 원화 기준 (삼성증권 엑셀 평가금액÷수량 역산)
+  // 기준일: 2026.05.30
+  {id:'h01',acct:'PENSION',ticker:'TIGER차이나반도체',name:'TIGER 차이나반도체FACTSET',qty:1435,avg:6210,cur:15835,currency:'KRW',divrate:0},
+  {id:'h02',acct:'PENSION',ticker:'TIGER미국S&P500',name:'TIGER 미국S&P500',qty:126,avg:22226,cur:28300,currency:'KRW',divrate:0.5},
+  {id:'h03',acct:'PENSION',ticker:'TIGER배당다우',name:'TIGER 미국배당다우존스',qty:160,avg:11869,cur:15540,currency:'KRW',divrate:3.0},
+  {id:'h04',acct:'PENSION',ticker:'삼성MMF',name:'삼성신종종류형MMF제4호-CP',qty:13689,avg:1,cur:1,currency:'KRW',divrate:0},
+  {id:'h05',acct:'IRP',ticker:'TIGER필라반도체',name:'TIGER 미국필라델피아반도체나스닥',qty:119,avg:17662,cur:50825,currency:'KRW',divrate:0},
+  {id:'h06',acct:'IRP',ticker:'ACE구글',name:'ACE 구글밸류체인액티브',qty:203,avg:10291,cur:27960,currency:'KRW',divrate:0},
+  {id:'h07',acct:'IRP',ticker:'PLUS고배당',name:'PLUS 고배당주채권혼합',qty:317,avg:13120,cur:15690,currency:'KRW',divrate:2.5},
+  {id:'h08',acct:'IRP',ticker:'TIGER S&P IRP',name:'TIGER 미국S&P500 IRP',qty:93,avg:17992,cur:28300,currency:'KRW',divrate:0.5},
+  {id:'h09',acct:'IRP',ticker:'TIGER차이나IRP',name:'TIGER 차이나반도체 IRP',qty:96,avg:10388,cur:15835,currency:'KRW',divrate:0},
+  {id:'h10',acct:'IRP',ticker:'TIGER배당IRP',name:'TIGER 미국배당다우존스 IRP',qty:20,avg:12080,cur:15540,currency:'KRW',divrate:3.0},
+  {id:'h11',acct:'ISA',ticker:'005930',name:'삼성전자',qty:139,avg:75573,cur:318500,currency:'KRW',divrate:2.2},
+  {id:'h12',acct:'ISA',ticker:'267250',name:'HD현대',qty:16,avg:155306,cur:276500,currency:'KRW',divrate:1.8},
+  {id:'h13',acct:'ISA',ticker:'042700',name:'한미반도체',qty:2,avg:331500,cur:288500,currency:'KRW',divrate:0.5},
+  // CMA 해외주식: 삼성증권 엑셀 평가금액(원화) ÷ 수량으로 역산 → 모두 KRW 기준
+  {id:'h14',acct:'CMA',ticker:'INTC',name:'인텔',qty:44,avg:53968,cur:172685,currency:'KRW',divrate:2.5},
+  {id:'h15',acct:'CMA',ticker:'PLUG',name:'플러그 파워',qty:426,avg:3991,cur:5948,currency:'KRW',divrate:0},
+  {id:'h16',acct:'CMA',ticker:'OSCR',name:'오스카 헬스',qty:64,avg:26370,cur:33474,currency:'KRW',divrate:0},
+  {id:'h17',acct:'CMA',ticker:'EVTL',name:'버티컬 에어로스페이스',qty:107,avg:8556,cur:4066,currency:'KRW',divrate:0},
+];
+const INIT_C = {PENSION:13625209,IRP:11270442,ISA:13652550,CMA:6677979};
+const ACCT_NM = {PENSION:'연금저축CMA',IRP:'IRP(퇴직연금)',ISA:'ISA',CMA:'종합(비대면)'};
+const ACCT_CL = {PENSION:'#7c3aed',IRP:'#059669',ISA:'#2563eb',CMA:'#d97706'};
+const COLORS = ['#2563eb','#059669','#d97706','#dc2626','#7c3aed','#0891b2','#ea580c','#16a34a','#db2777','#4f46e5','#b45309'];
+
+// ═══════════════════════════════════════════════
+// STATE — 전역 변수. 모든 함수가 이 아래에 있음
+// ═══════════════════════════════════════════════
+let S = { holdings: [], costs: {}, snapshots: [] };
+
+function uuid() { return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2); }
+const fmt  = n => Math.round(n).toLocaleString('ko-KR');
+const fmtP = n => (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
+const fok  = n => n >= 0 ? 'pos' : 'neg';
+const FX   = () => 1505.8;
+
+function evH(h)  { const c = h.cur || h.avg; return h.currency === 'USD' ? h.qty * c * FX() : h.qty * c; }
+function coH(h)  { return h.currency === 'USD' ? h.qty * h.avg * FX() : h.qty * h.avg; }
+function totalEval() { return S.holdings.reduce((s, h) => s + evH(h), 0); }
+function totalCost() { return Object.values(S.costs).reduce((s, v) => s + (parseFloat(v) || 0), 0); }
+
+function saveAll() { localStorage.setItem('pds4', JSON.stringify(S)); }
+function loadAll() {
+  try {
+    const raw = localStorage.getItem('pds4');
+    if (raw) {
+      S = JSON.parse(raw);
+      // 필수 키 누락 방지
+      if (!S.holdings) S.holdings = [];
+      if (!S.costs) S.costs = { PENSION:0, IRP:0, ISA:0, CMA:0 };
+      if (!S.snapshots) S.snapshots = [];
+      return;
+    }
+  } catch(e) {}
+  // 저장 데이터 없음 → 완전히 빈 상태로 시작
+  S = { holdings: [], costs: { PENSION:0, IRP:0, ISA:0, CMA:0 }, snapshots: [] };
+}
+
+// ═══════════════════════════════════════════════
+// XLSX 업로드 파서
+// ═══════════════════════════════════════════════
+function loadSheetJS(cb) {
+  if (window.XLSX) { cb(); return; }
+  const s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+  s.onload = cb;
+  s.onerror = () => alert('❌ SheetJS 라이브러리 로드 실패\n인터넷 연결을 확인해주세요.');
+  document.head.appendChild(s);
+}
+
+function uploadXlsx(e) {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  if (!file.name.toLowerCase().endsWith('.xlsx')) {
+    alert('⚠️ .xlsx 파일만 업로드 가능합니다.\n삼성증권 앱 → 자산 → 보유종목 → 엑셀 아이콘으로 저장한 파일을 올려주세요.');
+    return;
+  }
+
+  const ubox = document.getElementById('ubox');
+  const show = (msg, type) => {
+    if (!ubox) return;
+    ubox.className = 'ubox' + (type === 'ok' ? ' ok' : type === 'err' ? ' err' : '');
+    ubox.innerHTML = msg;
+  };
+  show('⏳ 파일 읽는 중...', '');
+
+  loadSheetJS(() => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        // ── SheetJS로 읽기 (raw:false → 숫자도 포맷된 문자열로)
+        const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
+
+        // ── 1행: 기준 날짜
+        const baseDate = rows[0] ? String(rows[0][0]).split(' ')[0] : '';
+
+        // ── 헤더 행 탐색: "계좌번호" 텍스트가 있는 행
+        let hi = -1;
+        for (let i = 0; i < rows.length; i++) {
+          if (rows[i].some(c => String(c).trim() === '계좌번호')) { hi = i; break; }
+        }
+        if (hi < 0) {
+          show('❌ 파일 형식 오류 — 삼성증권 보유종목 엑셀만 지원합니다', 'err');
+          alert('❌ 삼성증권 보유종목 형식이 아닙니다.\n\n삼성증권 앱 → 자산 → 보유종목\n→ 우측 상단 엑셀 아이콘(📊) → 저장');
+          return;
+        }
+
+        // ── 헬퍼
+        const toNum = v => {
+          const n = parseFloat(String(v == null ? '' : v).replace(/,/g, '').trim());
+          return isNaN(n) ? 0 : n;
+        };
+        const acctOf = s => {
+          if (/연금저축|연금CMA/i.test(s)) return 'PENSION';
+          if (/IRP|퇴직연금/i.test(s))    return 'IRP';
+          if (/ISA/i.test(s))             return 'ISA';
+          return 'CMA';
+        };
+        const SKIP = ['현금잔고', '예수금', '외화예수금', '현금성자산', 'WRAP'];
+
+        // ── 기존 배당률 보존
+        const divMap = {};
+        S.holdings.forEach(h => { divMap[h.name] = h.divrate || 0; });
+
+        const newH = [];
+        const newC = { PENSION: 0, IRP: 0, ISA: 0, CMA: 0 };
+
+        rows.slice(hi + 1).forEach(row => {
+          const acctRaw = String(row[0] || '').trim();
+          const name    = String(row[1] || '').trim();
+          if (!acctRaw || !name) return;
+          if (SKIP.some(k => name.includes(k))) return;
+
+          const acct    = acctOf(acctRaw);
+          const qty     = toNum(row[3]);
+          // ★ 핵심: 평가금액(col6)·매수금액(col5)은 항상 원화 기준으로 정확함
+          //   현재가·평단가는 이 두 값에서 역산 (달러/원화 혼동 없음)
+          const costAmt = toNum(row[5]);   // 매수금액 (원화)
+          const evalAmt = toNum(row[6]);   // 평가금액 (원화)
+
+          if (evalAmt <= 0 && costAmt <= 0) return;
+
+          // 현재가(원화) = 평가금액 ÷ 수량
+          const curKRW = qty > 0 ? evalAmt / qty : 0;
+          // 평단가(원화) = 매수금액 ÷ 수량
+          const avgKRW = qty > 0 ? (costAmt > 0 ? costAmt : evalAmt) / qty : 0;
+
+          // 통화는 항상 KRW (금액은 이미 원화로 저장)
+          // evH()·coH() 함수에서 currency=KRW이면 그대로 계산함
+          newC[acct] += costAmt > 0 ? costAmt : evalAmt;
+          newH.push({
+            id:       uuid(),
+            acct,
+            ticker:   name.replace(/\s/g, '').slice(0, 12),
+            name,
+            qty,
+            avg:      avgKRW,   // 원화 평단가
+            cur:      curKRW,   // 원화 현재가 (역산)
+            currency: 'KRW',    // 항상 KRW — 금액은 이미 원화
+            divrate:  divMap[name] || 0,
+          });
+        });
+
+        if (newH.length === 0) {
+          show('❌ 종목을 찾지 못했습니다. 파일을 확인해주세요.', 'err');
+          alert('❌ 종목이 없습니다.\n파일이 올바른지 확인해주세요.');
+          return;
+        }
+
+        // ── 저장
+        S.holdings  = newH;
+        S.costs     = newC;
+        const today = new Date().toISOString().slice(0, 10);
+        const evT   = totalEval();
+        const si    = S.snapshots.findIndex(s => s.date === today);
+        if (si >= 0) S.snapshots[si].val = Math.round(evT);
+        else S.snapshots.push({ date: today, val: Math.round(evT) });
+        if (S.snapshots.length > 365) S.snapshots = S.snapshots.slice(-365);
+        saveAll();
+
+        show('✅ <b>업로드 완료!</b> ' + newH.length + '개 종목 · 총 평가금액 ₩' + fmt(evT) + '  (기준: ' + baseDate + ')', 'ok');
+        renderDash();
+        alert('✅ 업로드 성공!\n\n종목 수: ' + newH.length + '개\n총 평가금액: ₩' + fmt(evT) + '\n기준일: ' + baseDate + '\n\n💡 배당수익률은 보유종목 탭에서\n종목명 클릭 후 수정할 수 있습니다.');
+
+      } catch (err) {
+        console.error('XLSX 파싱 오류:', err);
+        show('❌ 파싱 실패: ' + err.message, 'err');
+        alert('❌ 파일 읽기 실패\n오류: ' + err.message + '\n\n삼성증권 앱에서 내보낸 .xlsx 파일인지 확인해주세요.');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// DARK MODE
+// ═══════════════════════════════════════════════
+function toggleDark() {
+  const d = document.documentElement, on = d.getAttribute('data-theme') === 'dark';
+  d.setAttribute('data-theme', on ? '' : 'dark');
+  document.getElementById('dico').textContent = on ? '🌙' : '☀️';
+  localStorage.setItem('dk', on ? '' : '1');
+}
+if (localStorage.getItem('dk') === '1') {
+  document.documentElement.setAttribute('data-theme', 'dark');
+  document.getElementById('dico').textContent = '☀️';
+}
+
+// ═══════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════
+const PAGES = ['dashboard','holdings','rebalance','dividend','retire','report'];
+function goP(id) {
+  PAGES.forEach(p => {
+    const el = document.getElementById('pg-' + p);
+    if (el) el.style.display = p === id ? (p === 'dashboard' ? 'grid' : 'block') : 'none';
+  });
+  document.querySelectorAll('.nb').forEach((b, i) => b.classList.toggle('on', PAGES[i] === id));
+  if (id === 'dashboard') renderDash();
+  if (id === 'holdings')  renderH();
+  if (id === 'rebalance') renderRbl();
+  if (id === 'dividend')  updDiv();
+  if (id === 'retire')    calcR();
+  if (id === 'report')    renderRpt();
+}
+
+// ═══════════════════════════════════════════════
+// CHARTS
+// ═══════════════════════════════════════════════
+let CH = {};
+function dc(k) { if (CH[k]) { try { CH[k].destroy(); } catch(e) {} } }
+
+// ═══════════════════════════════════════════════
+// 최상단 분석 바
+// ═══════════════════════════════════════════════
+function updateAnalysisBar() {
+  const ev = totalEval(), co = totalCost(), rate = co > 0 ? (ev - co) / co * 100 : 0;
+  const techH = S.holdings.filter(h => ['TIGER차이나반도체','TIGER필라반도체','ACE구글','005930','042700'].includes(h.ticker) || h.name.includes('반도체') || h.name.includes('필라델피아'));
+  const techPct = ev > 0 ? techH.reduce((s, h) => s + evH(h), 0) / ev * 100 : 0;
+  let txt, tag;
+  if (techPct > 65) {
+    txt = `반도체·테크 집중도 ${techPct.toFixed(0)}% — 고수익·고변동성 구조. 삼성전자 ISA 수익이 전체를 견인 중이나 섹터 동시 조정 시 변동성 확대 우려. 배당성장주 비중 확대 권장`;
+    tag = '⚠️ 섹터집중';
+  } else if (rate > 80) {
+    txt = `총 수익률 ${rate.toFixed(0)}% 우수 — 연금계좌 비중 양호. 반도체 편중 완화 및 배당성장 ETF 추가로 안정성 강화 권장`;
+    tag = '✅ 양호';
+  } else {
+    txt = `총 자산 ₩${fmt(ev)} · 수익률 ${rate.toFixed(0)}% — 연금계좌 비중 점검 및 배당 다변화 전략 추천`;
+    tag = '📊 분석';
+  }
+  document.getElementById('abar-txt').textContent = txt;
+  document.getElementById('abar-tag').textContent = tag;
+}
+
+// ═══════════════════════════════════════════════
+// 연금 달성 요약
+// ═══════════════════════════════════════════════
+function updatePensionSummary() {
+  const pensionEv = S.holdings.filter(h => h.acct === 'PENSION' || h.acct === 'IRP').reduce((s, h) => s + evH(h), 0);
+  const yrs = 23, ror = 0.07, r = ror / 12, n = yrs * 12;
+  const mon = 50 * 10000 * 0.7;
+  const proj = pensionEv * Math.pow(1 + ror, yrs) + mon * ((Math.pow(1 + r, n) - 1) / r);
+  const monthlyP = proj / 12 / 30;
+  const target = 3500000;
+  const pct = Math.min(Math.round(monthlyP / target * 100), 100);
+  const shortfall = Math.max(target - monthlyP, 0);
+
+  document.getElementById('ps-pct').textContent = pct + '%';
+  document.getElementById('ps-pct').style.color = pct >= 100 ? 'var(--green)' : pct >= 60 ? 'var(--amber)' : 'var(--red)';
+  document.getElementById('t-ppct').textContent = pct + '%';
+  document.getElementById('t-ppct').style.color = pct >= 100 ? 'var(--green)' : pct >= 60 ? 'var(--amber)' : 'var(--red)';
+  document.getElementById('ps-bar').style.width = pct + '%';
+  document.getElementById('ps-bar').style.background = pct >= 100 ? 'var(--green)' : pct >= 60 ? 'var(--amber)' : 'var(--red)';
+  document.getElementById('ps-detail').innerHTML = '<b>55세 연금계좌 예상잔고</b> ₩' + fmt(proj) + '<br>월 수령 예상 <b>₩' + fmt(monthlyP) + '</b> / 목표 ₩350만원';
+
+  let strat;
+  if (pct >= 100) {
+    strat = '✅ <b>현재 페이스라면 55세 목표 달성 가능합니다.</b> 차이나반도체 ETF 고수익이 연금계좌를 견인 중이나 변동성이 큰 만큼, TIGER 배당다우존스·PLUS 고배당 비중을 점진적으로 늘려 안정적 수령 기반을 마련하세요.';
+  } else if (pct >= 60) {
+    strat = '⚠️ <b>달성률 ' + pct + '% — 월 ' + Math.ceil(shortfall / 10000) + '만원 부족합니다.</b> 연금저축 세액공제 한도(연 600만원)와 IRP 추가납입(연 300만원)을 최대 활용하고, 절세 환급금을 재투자하면 달성률이 크게 개선됩니다.';
+  } else {
+    strat = '🔴 <b>달성률 ' + pct + '% — 월 투자금 증액이 필요합니다.</b> ISA 만기 자금의 연금계좌 이전(비과세 혜택), 연금저축·IRP 한도 최대 활용을 우선 실행하세요. 월 ' + Math.ceil(shortfall / 10000 * 1.5) + '만원 추가 투자 시 목표 달성 가능합니다.';
+  }
+  document.getElementById('ps-strategy').innerHTML = strat;
+}
+
+// ═══════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════
+function renderDash() {
+  const ev = totalEval(), co = totalCost(), profit = ev - co, rate = co > 0 ? profit / co * 100 : 0;
+  document.getElementById('t-eval').textContent  = '₩' + fmt(ev);
+  document.getElementById('t-date').textContent  = new Date().toLocaleDateString('ko-KR') + ' · 삼성증권';
+  document.getElementById('t-cost').textContent  = '₩' + fmt(co);
+  document.getElementById('t-profit').textContent = (profit >= 0 ? '+₩' : '-₩') + fmt(Math.abs(profit));
+  document.getElementById('t-profit').className  = 'sv ' + fok(profit);
+  document.getElementById('t-rate').textContent  = fmtP(rate);
+  document.getElementById('t-rate').className    = 'sv ' + fok(rate);
+  const bgs = document.getElementById('t-bgs');
+  bgs.innerHTML = '<span class="bg ' + (rate >= 0 ? 'bgg' : '') + '">' + fmtP(rate) + '</span>' +
+    '<span class="bg bgu">+₩' + fmt(profit / 10000) + '만 수익</span>';
+
+  updatePensionSummary();
+  updateAnalysisBar();
+
+  // 배당 요약
+  const totalDiv = S.holdings.reduce((s, h) => s + evH(h) * (h.divrate || 0) / 100, 0);
+  document.getElementById('dd-m').textContent = '₩' + fmt(totalDiv / 12);
+  document.getElementById('dd-y').textContent = '₩' + fmt(totalDiv);
+  document.getElementById('dd-r').textContent = ev > 0 ? (totalDiv / ev * 100).toFixed(2) + '%' : '0%';
+
+  // 파이 차트
+  dc('pie');
+  const topH = [...S.holdings].sort((a, b) => evH(b) - evH(a)).slice(0, 10);
+  CH.pie = new Chart(document.getElementById('pie-c'), {
+    type: 'doughnut',
+    data: { labels: topH.map(h => h.ticker), datasets: [{ data: topH.map(h => evH(h)), backgroundColor: COLORS, borderWidth: 0, hoverOffset: 5 }] },
+    options: { plugins: { legend: { position: 'bottom', labels: { font: { size: 9 }, padding: 5, boxWidth: 9 } } }, cutout: '60%', responsive: true, maintainAspectRatio: false }
+  });
+
+  // 계좌별 막대
+  dc('acct');
+  const ak = ['PENSION','IRP','ISA','CMA'];
+  CH.acct = new Chart(document.getElementById('acct-c'), {
+    type: 'bar',
+    data: {
+      labels: ['연금저축','IRP','ISA','종합'],
+      datasets: [
+        { label: '평가금액', data: ak.map(k => S.holdings.filter(h => h.acct === k).reduce((s, h) => s + evH(h), 0)), backgroundColor: Object.values(ACCT_CL), borderRadius: 4 },
+        { label: '투자원금', data: ak.map(k => parseFloat(S.costs[k]) || 0), backgroundColor: 'rgba(180,180,180,0.3)', borderRadius: 4 }
+      ]
+    },
+    options: { plugins: { legend: { position: 'top', labels: { font: { size: 10 }, boxWidth: 9 } } }, scales: { x: { ticks: { font: { size: 10 } } }, y: { ticks: { callback: v => '₩' + Math.round(v / 10000000) + '천만', font: { size: 9 } } } }, responsive: true, maintainAspectRatio: false }
+  });
+
+  // 보유종목 미리보기
+  const tb = document.getElementById('dash-tb'); tb.innerHTML = '';
+  [...S.holdings].sort((a, b) => evH(b) - evH(a)).slice(0, 10).forEach(h => {
+    const hev = evH(h), hco = coH(h), rt = hco > 0 ? (hev - hco) / hco * 100 : 0, wt = ev > 0 ? hev / ev * 100 : 0;
+    tb.innerHTML += '<tr><td><div class="tn">' + h.ticker + '</div><div class="ts2">' + h.name.slice(0, 14) + '</div></td>' +
+      '<td><span class="tag tg-' + h.acct.toLowerCase() + '">' + ACCT_NM[h.acct].slice(0, 4) + '</span></td>' +
+      '<td>₩' + fmt(hev) + '</td><td class="' + fok(rt) + '">' + fmtP(rt) + '</td>' +
+      '<td><div class="wb"><div class="wbar"><div class="wfill" style="width:' + Math.min(wt * 2.5, 100) + '%"></div></div><span style="font-size:10px">' + wt.toFixed(1) + '%</span></div></td></tr>';
+  });
+
+  selAcct(document.querySelector('.at.on'), 'PENSION');
+}
+
+function selAcct(el, type) {
+  document.querySelectorAll('.at').forEach(t => t.classList.remove('on'));
+  if (el) el.classList.add('on');
+  const hs = S.holdings.filter(h => h.acct === type);
+  const hev = hs.reduce((s, h) => s + evH(h), 0), hco = parseFloat(S.costs[type]) || 0;
+  const profit = hev - hco, rate = hco > 0 ? profit / hco * 100 : 0, pct = totalEval() > 0 ? hev / totalEval() * 100 : 0;
+  document.getElementById('acct-det').innerHTML =
+    '<div class="prow"><div class="plbls"><span>' + ACCT_NM[type] + '</span><span>' + pct.toFixed(1) + '%</span></div>' +
+    '<div class="pbar"><div class="pfill" style="width:' + pct + '%;background:' + ACCT_CL[type] + '"></div></div></div>' +
+    '<div class="sg">' +
+    '<div class="st"><div class="sl">평가금액</div><div class="sv">₩' + fmt(hev) + '</div></div>' +
+    '<div class="st"><div class="sl">투자원금</div><div class="sv">₩' + fmt(hco) + '</div></div>' +
+    '<div class="st"><div class="sl">수익금</div><div class="sv ' + fok(profit) + '">' + (profit >= 0 ? '+' : '-') + '₩' + fmt(Math.abs(profit)) + '</div></div>' +
+    '<div class="st"><div class="sl">수익률</div><div class="sv ' + fok(rate) + '">' + fmtP(rate) + '</div></div></div>';
+}
+
+// ═══════════════════════════════════════════════
+// HOLDINGS
+// ═══════════════════════════════════════════════
+let sKey = 'eval', sAsc = false;
+function getV(h) {
+  switch(sKey) {
+    case 'name': return h.ticker; case 'qty': return h.qty; case 'avg': return coH(h) / h.qty;
+    case 'cur': return h.cur; case 'eval': return evH(h);
+    case 'profit': return evH(h) - coH(h); case 'rate': return coH(h) > 0 ? (evH(h) - coH(h)) / coH(h) : 0;
+    case 'weight': return evH(h); default: return 0;
+  }
+}
+function srt(k) { if (sKey === k) sAsc = !sAsc; else { sKey = k; sAsc = false; } renderH(); }
+function renderH() {
+  const ev = totalEval();
+  const sorted = [...S.holdings].sort((a, b) => { const av = getV(a), bv = getV(b); return sAsc ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1); });
+  const tb = document.getElementById('h-tb'); tb.innerHTML = '';
+  sorted.forEach(h => {
+    const hev = evH(h), hco = coH(h), profit = hev - hco, rate = hco > 0 ? profit / hco * 100 : 0, wt = ev > 0 ? hev / ev * 100 : 0;
+    const cs = h.currency === 'USD' ? '$' + h.cur.toFixed(2) : '₩' + fmt(h.cur);
+    const as = h.currency === 'USD' ? '$' + h.avg.toFixed(2) : '₩' + fmt(h.avg);
+    tb.innerHTML += '<tr><td><div class="tn" style="cursor:pointer" onclick="editH(\'' + h.id + '\')">' + h.ticker + '</div><div class="ts2">' + h.name.slice(0, 16) + '</div></td>' +
+      '<td><span class="tag tg-' + h.acct.toLowerCase() + '">' + ACCT_NM[h.acct].slice(0, 4) + '</span></td>' +
+      '<td>' + h.qty + '</td><td>' + as + '</td><td>' + cs + '</td>' +
+      '<td>₩' + fmt(hev) + '</td>' +
+      '<td class="' + fok(profit) + '">' + (profit >= 0 ? '+' : '-') + '₩' + fmt(Math.abs(profit)) + '</td>' +
+      '<td class="' + fok(rate) + '">' + fmtP(rate) + '</td>' +
+      '<td><div class="wb"><div class="wbar"><div class="wfill" style="width:' + Math.min(wt * 4, 100) + '%"></div></div><span style="font-size:10px">' + wt.toFixed(1) + '%</span></div></td>' +
+      '<td><button class="dlbtn" onclick="delH(\'' + h.id + '\')">✕</button></td></tr>';
+  });
+  document.getElementById('h-cnt').textContent = S.holdings.length;
+  document.getElementById('h-tot').textContent = '₩' + fmt(ev);
+}
+
+// ═══════════════════════════════════════════════
+// REBALANCE
+// ═══════════════════════════════════════════════
+function renderRbl() {
+  const inp = document.getElementById('tgt-inp'); inp.innerHTML = '';
+  const saved = JSON.parse(localStorage.getItem('tgts4') || '{}');
+  S.holdings.filter(h => h.ticker !== '삼성MMF').forEach(h => {
+    inp.innerHTML += '<div style="margin-bottom:7px"><div style="font-size:11px;color:var(--text2);margin-bottom:2px">' + h.ticker +
+      ' <span class="tag tg-' + h.acct.toLowerCase() + '">' + ACCT_NM[h.acct].slice(0, 4) + '</span></div>' +
+      '<div style="display:flex;align-items:center;gap:5px">' +
+      '<input type="number" min="0" max="100" step="0.5" id="t-' + h.id + '" value="' + (saved[h.id] || '') + '" placeholder="0" style="width:65px;padding:5px 7px;border:1px solid var(--border);border-radius:var(--rs);background:var(--bg3);color:var(--text);font-size:12px">' +
+      '<span style="font-size:11px;color:var(--text2)">%</span></div></div>';
+  });
+}
+function calcRbl() {
+  const tgts = {}; let sum = 0;
+  S.holdings.forEach(h => { const el = document.getElementById('t-' + h.id); const v = el ? parseFloat(el.value) || 0 : 0; tgts[h.id] = v; sum += v; });
+  if (Math.abs(sum - 100) > 2) { alert('합계 ' + sum.toFixed(1) + '% → 100%로 맞춰주세요'); return; }
+  localStorage.setItem('tgts4', JSON.stringify(tgts));
+  const ev = totalEval(), res = document.getElementById('rbl-res'); res.innerHTML = '';
+  const labels = [], curA = [], tgtA = [];
+  S.holdings.forEach(h => {
+    const hev = evH(h), cur = ev > 0 ? hev / ev * 100 : 0, tgt = tgts[h.id] || 0, diff = cur - tgt;
+    if (Math.abs(tgt) < 0.01 && Math.abs(cur) < 0.01) return;
+    labels.push(h.ticker); curA.push(parseFloat(cur.toFixed(2))); tgtA.push(tgt);
+    const amt = Math.abs(diff / 100 * ev), isBuy = diff < 0;
+    const px = h.currency === 'USD' ? h.cur * FX() : h.cur;
+    const shares = px > 0 ? Math.round(amt / px) : 0;
+    const cls = Math.abs(diff) < 0.5 ? 'pok' : isBuy ? 'pbuy' : 'psell';
+    const lbl = Math.abs(diff) < 0.5 ? '✓ 유지' : isBuy ? '🟢 매수' : '🔴 매도';
+    res.innerHTML += '<div class="rar"><div><div style="font-weight:700;font-size:12px">' + h.ticker + '</div>' +
+      '<div style="font-size:10px;color:var(--text2)">' + cur.toFixed(1) + '% → ' + tgt + '% (' + (diff > 0 ? '+' : '') + diff.toFixed(1) + '%p)</div>' +
+      (Math.abs(diff) >= 0.5 ? '<div style="font-size:10px;color:var(--text2)">약 ' + shares + '주 · ₩' + fmt(amt) + '</div>' : '') +
+      '</div><span class="ap ' + cls + '">' + lbl + '</span></div>';
+  });
+  dc('rbl');
+  CH.rbl = new Chart(document.getElementById('rbl-c'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label: '현재(%)', data: curA, backgroundColor: '#2563eb', borderRadius: 3 }, { label: '목표(%)', data: tgtA, backgroundColor: '#059669', borderRadius: 3 }] },
+    options: { plugins: { legend: { position: 'top', labels: { font: { size: 10 }, boxWidth: 9 } } }, scales: { x: { ticks: { font: { size: 9 } } }, y: { ticks: { callback: v => v + '%', font: { size: 9 } } } }, responsive: true, maintainAspectRatio: false }
+  });
+}
+
+// ═══════════════════════════════════════════════
+// DIVIDEND
+// ═══════════════════════════════════════════════
+function c5(y, g, r) { let c = 0, d = y; for (let i = 0; i < 5; i++) { c += d; d *= (1 + g); if (r) d *= 1.02; } return c; }
+function c10(y, g, r) { let c = 0, d = y; for (let i = 0; i < 10; i++) { c += d; d *= (1 + g); if (r) d *= 1.02; } return c; }
+function updDiv() {
+  const rei = document.getElementById('rei-t').checked;
+  const gr  = parseFloat(document.getElementById('gr-r').value) / 100;
+  document.getElementById('gr-v').textContent = (gr * 100).toFixed(0) + '%';
+  const totalY = S.holdings.reduce((s, h) => s + evH(h) * (h.divrate || 0) / 100, 0);
+  document.getElementById('dsum').innerHTML =
+    '<div class="dsc"><div class="v">₩' + fmt(totalY / 12) + '</div><div class="l">월 배당</div></div>' +
+    '<div class="dsc"><div class="v">₩' + fmt(totalY) + '</div><div class="l">연 배당</div></div>' +
+    '<div class="dsc"><div class="v">₩' + fmt(c5(totalY, gr, rei)) + '</div><div class="l">5년 누적</div></div>' +
+    '<div class="dsc"><div class="v">₩' + fmt(c10(totalY, gr, rei)) + '</div><div class="l">10년 누적</div></div>';
+  const yrs = Array.from({ length: 11 }, (_, i) => i);
+  let cum = 0, yd = totalY;
+  const cumD = yrs.map(y => { if (y > 0) { yd *= (1 + gr); if (rei) yd *= 1.02; } cum += yd; return Math.round(cum); });
+  const ydD  = yrs.map(y => { let d = totalY; for (let i = 0; i < y; i++) { d *= (1 + gr); if (rei) d *= 1.02; } return Math.round(d); });
+  dc('div');
+  CH.div = new Chart(document.getElementById('div-c'), {
+    type: 'bar',
+    data: { labels: yrs.map(y => (2026 + y) + '년'), datasets: [
+      { label: '연 배당금', data: ydD, backgroundColor: 'rgba(5,150,105,0.6)', borderRadius: 3, yAxisID: 'y' },
+      { label: '누적 배당금', data: cumD, type: 'line', borderColor: '#d97706', borderWidth: 2, pointRadius: 2, fill: false, tension: 0.4, yAxisID: 'y1' }
+    ]},
+    options: { plugins: { legend: { position: 'top', labels: { font: { size: 10 }, boxWidth: 9 } } }, scales: { y: { ticks: { callback: v => '₩' + Math.round(v / 10000) + '만', font: { size: 9 } }, grid: { display: false } }, y1: { position: 'right', ticks: { callback: v => '₩' + Math.round(v / 10000) + '만', font: { size: 9 } }, grid: { display: false } } }, responsive: true, maintainAspectRatio: false }
+  });
+  const tb = document.getElementById('div-tb'); tb.innerHTML = '';
+  S.holdings.filter(h => h.divrate > 0).forEach(h => {
+    const hev = evH(h), yr = hev * (h.divrate || 0) / 100;
+    tb.innerHTML += '<tr><td><div class="tn">' + h.ticker + '</div><div class="ts2">' + h.name.slice(0, 14) + '</div></td>' +
+      '<td><span class="tag tg-' + h.acct.toLowerCase() + '">' + ACCT_NM[h.acct].slice(0, 4) + '</span></td>' +
+      '<td>' + h.divrate + '%</td><td>₩' + fmt(yr / 12) + '</td><td>₩' + fmt(yr) + '</td>' +
+      '<td>₩' + fmt(c5(yr, gr, rei)) + '</td><td>₩' + fmt(c10(yr, gr, rei)) + '</td></tr>';
+  });
+}
+
+// ═══════════════════════════════════════════════
+// RETIRE + 연금수령 시뮬레이션
+// ═══════════════════════════════════════════════
+function calcR() {
+  const age = +document.getElementById('r-age').value, ret = +document.getElementById('r-ret').value;
+  const liv = +document.getElementById('r-liv').value, mon = +document.getElementById('r-mon').value;
+  const ror = parseFloat(document.getElementById('r-ror').value) / 100, life = +document.getElementById('r-life').value;
+  document.getElementById('rv-age').textContent  = age + '세';
+  document.getElementById('rv-ret').textContent  = ret + '세';
+  document.getElementById('rv-liv').textContent  = liv + '만원';
+  document.getElementById('rv-mon').textContent  = mon + '만원';
+  document.getElementById('rv-ror').textContent  = (ror * 100).toFixed(1) + '%';
+  document.getElementById('rv-life').textContent = life + '세';
+
+  const yrs = Math.max(ret - age, 1), r = ror / 12, n = yrs * 12, curEv = totalEval();
+  const proj = curEv * Math.pow(1 + ror, yrs) + mon * 10000 * ((Math.pow(1 + r, n) - 1) / r);
+  const lifeYrs = Math.max(life - ret, 1), target = liv * 10000 * 12 * lifeYrs;
+  const pct = Math.min(Math.round(proj / target * 100), 200), gap = Math.max(target - proj, 0);
+  const addM = gap > 0 ? Math.ceil(gap / ((Math.pow(1 + r, n) - 1) / r) / 10000) : 0;
+
+  document.getElementById('ring-pct').textContent = Math.min(pct, 100) + '%';
+  document.getElementById('ring-c').style.strokeDashoffset = 264 * (1 - Math.min(pct, 100) / 100);
+  document.getElementById('ring-c').style.stroke = pct >= 100 ? '#059669' : pct >= 70 ? '#d97706' : '#dc2626';
+  document.getElementById('r-asset').textContent = '₩' + fmt(proj);
+  document.getElementById('r-tgt').textContent   = '₩' + fmt(target);
+  document.getElementById('r-gap').textContent   = gap > 0 ? '-₩' + fmt(gap) : '✅ 달성!';
+  document.getElementById('r-add').textContent   = gap > 0 ? addM + '만원/월' : '없음';
+
+  // 자산 성장 그래프
+  const pts = Math.min(yrs, 40), step = Math.ceil(yrs / pts);
+  const xl = [], xp = [], xt = [];
+  for (let y = 0; y <= yrs; y += step) {
+    xl.push((age + y) + '세');
+    xp.push(Math.round(curEv * Math.pow(1 + ror, y) + mon * 10000 * ((Math.pow(1 + r, y * 12) - 1) / r)));
+    xt.push(Math.round(target));
+  }
+  dc('ret');
+  CH.ret = new Chart(document.getElementById('ret-c'), {
+    type: 'line',
+    data: { labels: xl, datasets: [
+      { label: '예상 자산', data: xp, borderColor: '#2563eb', borderWidth: 2.5, pointRadius: 0, fill: true, backgroundColor: 'rgba(37,99,235,0.08)', tension: 0.4 },
+      { label: '목표 자산', data: xt, borderColor: '#dc2626', borderWidth: 1.5, borderDash: [5, 4], pointRadius: 0, fill: false }
+    ]},
+    options: { plugins: { legend: { position: 'top', labels: { font: { size: 10 }, boxWidth: 9 } } }, scales: { x: { ticks: { font: { size: 9 } }, grid: { display: false } }, y: { ticks: { font: { size: 9 }, callback: v => v >= 100000000 ? Math.round(v / 100000000 * 10) / 10 + '억' : '₩' + Math.round(v / 10000) + '만' }, grid: { color: 'rgba(128,128,128,0.08)' } } }, responsive: true, maintainAspectRatio: false }
+  });
+
+  // 연금 수령 시뮬
+  const pensionEv = S.holdings.filter(h => h.acct === 'PENSION' || h.acct === 'IRP').reduce((s, h) => s + evH(h), 0);
+  const pensionProj = pensionEv * Math.pow(1 + ror, yrs) + mon * 10000 * 0.7 * ((Math.pow(1 + r, n) - 1) / r);
+  const otherProj   = Math.max(proj - pensionProj, 0);
+  const monthlyP    = pensionProj / 12 / lifeYrs;
+  const monthlyO    = otherProj / 12 / lifeYrs;
+  const totalM      = monthlyP + monthlyO, tgtM = liv * 10000;
+  const achP = Math.round(monthlyP / tgtM * 100), achT = Math.round(totalM / tgtM * 100);
+
+  document.getElementById('ph1-yr').textContent = age + '~' + ret + '세 (' + yrs + '년)';
+  document.getElementById('ph2-yr').textContent = ret + '~' + life + '세 (' + lifeYrs + '년)';
+  document.getElementById('ph3-yr').textContent = life + '세 이후';
+  document.getElementById('sim-cards').innerHTML =
+    '<div class="sim-card ' + (achP >= 100 ? 'ok' : 'warn') + '"><div class="val">' + achP + '%</div><div class="lbl">연금계좌 달성률<br>(연금저축+IRP)</div></div>' +
+    '<div class="sim-card ' + (achT >= 100 ? 'ok' : 'warn') + '"><div class="val">' + achT + '%</div><div class="lbl">전체 달성률<br>(연금+일반)</div></div>' +
+    '<div class="sim-card"><div class="val" style="font-size:12px">₩' + fmt(monthlyP) + '</div><div class="lbl">연금계좌 월수령<br>' + ret + '세~' + life + '세</div></div>' +
+    '<div class="sim-card ' + (achT >= 100 ? 'ok' : '') + '"><div class="val" style="font-size:12px">₩' + fmt(totalM) + '</div><div class="lbl">전체 월수령 예상<br>목표 ₩' + liv + '만원</div></div>';
+
+  const sl = [], sp = [], so = [];
+  let pb = pensionProj, ob = otherProj;
+  const st2 = Math.ceil(lifeYrs / 15) || 1;
+  for (let y = 0; y <= lifeYrs; y += st2) {
+    sl.push((ret + y) + '세'); sp.push(Math.max(Math.round(pb), 0)); so.push(Math.max(Math.round(ob), 0));
+    pb = pb * (1 + ror) - monthlyP * 12 * st2; ob = ob * (1 + ror) - monthlyO * 12 * st2;
+  }
+  dc('sim');
+  CH.sim = new Chart(document.getElementById('sim-c'), {
+    type: 'line',
+    data: { labels: sl, datasets: [
+      { label: '연금계좌', data: sp, borderColor: '#7c3aed', borderWidth: 2, pointRadius: 0, fill: true, backgroundColor: 'rgba(124,58,237,0.1)', tension: 0.3 },
+      { label: '일반계좌', data: so, borderColor: '#059669', borderWidth: 2, pointRadius: 0, fill: true, backgroundColor: 'rgba(5,150,105,0.08)', tension: 0.3 }
+    ]},
+    options: { plugins: { legend: { position: 'top', labels: { font: { size: 9 }, boxWidth: 8 } } }, scales: { x: { ticks: { font: { size: 8 } }, grid: { display: false } }, y: { ticks: { font: { size: 8 }, callback: v => v >= 100000000 ? Math.round(v / 100000000 * 10) / 10 + '억' : '₩' + Math.round(v / 10000) + '만' } } }, responsive: true, maintainAspectRatio: false }
+  });
+
+  const shortfall = Math.max(tgtM - totalM, 0);
+  document.getElementById('strategy-box').innerHTML =
+    '<div style="font-size:12px;line-height:1.8;display:flex;flex-direction:column;gap:8px">' +
+    '<div style="background:var(--pl);border-radius:var(--rs);padding:10px 12px"><b style="color:var(--purple)">📌 ' + ret + '세 연금계좌 예상 잔고</b><br>₩' + fmt(pensionProj) + ' (현재 ₩' + fmt(pensionEv) + '에서 ' + yrs + '년 복리 성장)</div>' +
+    '<div style="background:var(--gl);border-radius:var(--rs);padding:10px 12px"><b style="color:var(--green)">💡 연금저축 절세 전략</b><br>• 연금저축 납입 시 세액공제 최대 16.5% (연 600만원 기준 약 99만원 환급)<br>• IRP 추가납입 연 300만원 추가 세액공제<br>• 55세 수령 시 연금소득세 3.3~5.5% (일반 과세 15.4%보다 유리)</div>' +
+    '<div style="background:' + (achT >= 100 ? 'var(--gl)' : 'var(--rl)') + ';border-radius:var(--rs);padding:10px 12px"><b style="color:' + (achT >= 100 ? 'var(--green)' : 'var(--red)') + '">' + (achT >= 100 ? '✅ 목표 달성 가능' : '⚠️ 추가 투자 필요') + '</b><br>월 목표 ₩' + fmt(tgtM) + ' / 예상 수령 ₩' + fmt(totalM) + (shortfall > 0 ? '<br>월 <b>₩' + fmt(shortfall) + ' 부족</b> — 월 투자금 ' + Math.ceil(shortfall / 10000 * 1.5) + '만원 증액 시 달성 가능' : '<br>현재 투자 페이스 유지 권장') + '</div></div>';
+}
+
+// ═══════════════════════════════════════════════
+// AI REPORT
+// ═══════════════════════════════════════════════
+const NEWS = [
+  {t:'삼성전자', title:'삼성전자 1Q 영업이익 5.2조 — HBM 수주 확대', sum:'HBM3E 양산 본격화. 2분기 추가 개선 전망.', g:'good'},
+  {t:'TIGER 차이나반도체', title:'中 AI 투자 확대 — 반도체 ETF 강세', sum:'중국 AI 인프라 투자 확대로 상승세. 미중 관세 리스크 상존.', g:'warn'},
+  {t:'TIGER 필라반도체', title:'필라델피아 반도체지수 AI 사이클 수혜', sum:'엔비디아·TSMC 중심 강세. ETF 순자산 최대.', g:'good'},
+  {t:'인텔', title:'인텔 파운드리 분리 검토 — 단기 불확실성', sum:'Intel Foundry 별도 법인 검토 중. 주가 변동성 우려.', g:'warn'},
+  {t:'ACE 구글', title:'구글 AI 광고 수익 +28% 급증', sum:'AI 기반 검색 광고 매출 급성장.', g:'good'},
+];
+let rptTxt = '';
+function renderRpt() {
+  document.getElementById('news-box').innerHTML = NEWS.map(n =>
+    '<div style="padding:9px 0;border-bottom:1px solid var(--border)">' +
+    '<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px">' +
+    '<span class="tag ' + (n.g === 'good' ? 'tg-isa' : 'tg-cma') + '">' + (n.g === 'good' ? '😊 좋음' : '😐 보통') + '</span>' +
+    '<span style="font-size:10px;color:var(--text3)">' + n.t + '</span></div>' +
+    '<div style="font-size:12px;font-weight:700;margin-bottom:2px">' + n.title + '</div>' +
+    '<div style="font-size:11px;color:var(--text2);line-height:1.5">' + n.sum + '</div></div>'
+  ).join('');
+}
+function genRpt() {
+  const ev = totalEval(), co = totalCost(), profit = ev - co, rate = co > 0 ? profit / co * 100 : 0;
+  const totalDiv = S.holdings.reduce((s, h) => s + evH(h) * (h.divrate || 0) / 100, 0);
+  const lines = S.holdings.map(h => {
+    const hev = evH(h), hco = coH(h), wt = ev > 0 ? (hev / ev * 100).toFixed(1) : 0, rt = hco > 0 ? ((hev - hco) / hco * 100).toFixed(1) : 0;
+    return '  - [' + ACCT_NM[h.acct] + '] ' + h.name + ': ' + h.qty + '주, 평가 ₩' + fmt(hev) + ', 비중 ' + wt + '%, 수익률 ' + rt + '%';
+  }).join('\n');
+  rptTxt = '안녕하세요! 32세 개인 투자자입니다. 포트폴리오를 분석해주세요.\n\n' +
+    '📅 기준일: ' + new Date().toLocaleDateString('ko-KR') + '\n' +
+    '💼 총 자산: ₩' + fmt(ev) + ' (원금 ₩' + fmt(co) + ', 수익 +' + rate.toFixed(1) + '%)\n' +
+    '📋 보유종목 ' + S.holdings.length + '개:\n' + lines + '\n' +
+    '💵 배당: 월 ₩' + fmt(totalDiv / 12) + ' / 연 ₩' + fmt(totalDiv) + '\n' +
+    '🏖️ 목표: 32세→55세 은퇴, 월 생활비 350만원, 월 투자금 50만원\n\n---\n' +
+    '아래 항목으로 한국어 리포트 작성해주세요 (초보 투자자 눈높이):\n' +
+    '1. 포트폴리오 총평 (강점/개선점)\n2. 수익률 분석\n3. 리밸런싱 의견 (구체적 종목·금액)\n' +
+    '4. 55세 연금수령 350만원 달성 가능성\n5. 지금 당장 해야 할 투자 액션 3가지';
+  document.getElementById('r-body').innerHTML = '<div style="white-space:pre-wrap;font-size:11px;line-height:1.8;color:var(--text)">' + rptTxt + '</div>';
+  document.getElementById('copy-btn').disabled = false;
+}
+function cpyRpt() {
+  navigator.clipboard.writeText(rptTxt).then(() => {
+    window.open('https://claude.ai', '_blank');
+    alert('✅ 복사 완료!\nclaude.ai 탭에 붙여넣기(Ctrl+V)하세요!');
+  }).catch(() => prompt('복사 후 claude.ai에 붙여넣기:', rptTxt));
+}
+
+// ═══════════════════════════════════════════════
+// MODAL (종목 추가/수정)
+// ═══════════════════════════════════════════════
+function openAdd() {
+  document.getElementById('modal-title').textContent = '종목 추가';
+  document.getElementById('m-id').value = '';
+  ['m-tkr','m-nm','m-qty','m-avg','m-cur','m-div'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('m-acct').value = 'PENSION';
+  document.getElementById('m-curt').value = 'KRW';
+  document.getElementById('modal').classList.add('open');
+}
+function editH(id) {
+  const h = S.holdings.find(x => x.id === id); if (!h) return;
+  document.getElementById('modal-title').textContent = '종목 수정';
+  document.getElementById('m-id').value   = id;
+  document.getElementById('m-acct').value = h.acct;
+  document.getElementById('m-tkr').value  = h.ticker;
+  document.getElementById('m-nm').value   = h.name;
+  document.getElementById('m-qty').value  = h.qty;
+  document.getElementById('m-avg').value  = h.avg;
+  document.getElementById('m-cur').value  = h.cur;
+  document.getElementById('m-curt').value = h.currency;
+  document.getElementById('m-div').value  = h.divrate || '';
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+function saveH() {
+  const tkr = document.getElementById('m-tkr').value.trim();
+  const nm  = document.getElementById('m-nm').value.trim();
+  const qty = parseFloat(document.getElementById('m-qty').value);
+  const avg = parseFloat(document.getElementById('m-avg').value);
+  if (!tkr || !nm || !qty || !avg) { alert('모든 항목을 입력해주세요'); return; }
+  const eid = document.getElementById('m-id').value;
+  const cur = parseFloat(document.getElementById('m-cur').value) || avg;
+  const obj = { id: eid || uuid(), acct: document.getElementById('m-acct').value, ticker: tkr, name: nm, qty, avg, cur, currency: document.getElementById('m-curt').value, divrate: parseFloat(document.getElementById('m-div').value) || 0 };
+  if (eid) { const i = S.holdings.findIndex(h => h.id === eid); if (i >= 0) S.holdings[i] = obj; }
+  else S.holdings.push(obj);
+  saveAll(); closeModal(); renderH(); renderDash();
+}
+function delH(id) {
+  if (!confirm('삭제할까요?')) return;
+  S.holdings = S.holdings.filter(h => h.id !== id);
+  saveAll(); renderH();
+}
+
+function resetAll() {
+  if (!confirm('⚠️ 모든 데이터를 완전히 삭제할까요?\n\n계좌 정보, 종목, 스냅샷이 전부 삭제되며\n되돌릴 수 없습니다.')) return;
+
+  // localStorage 완전 삭제
+  localStorage.removeItem('pds4');
+  localStorage.removeItem('tgts4');
+  localStorage.removeItem('dk');
+
+  // 빈 상태로 초기화 (INIT_H 사용하지 않음)
+  S = { holdings: [], costs: { PENSION:0, IRP:0, ISA:0, CMA:0 }, snapshots: [] };
+
+  // 화면 초기화
+  const ubox = document.getElementById('ubox');
+  if (ubox) {
+    ubox.className = 'ubox';
+    ubox.innerHTML = '📂 <b>데이터가 비어있습니다.</b> 삼성증권 앱 → 자산 → 보유종목 → 우측 상단 엑셀 아이콘(📊) → 저장 후 상단 <b>[📂 계좌 업로드]</b> 버튼으로 올려주세요.';
+  }
+
+  renderDash();
+  alert('✅ 완전 삭제 완료\n모든 데이터가 삭제됐습니다.\n\n상단 [📂 계좌 업로드] 버튼으로\n본인 계좌를 업로드해주세요.');
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+loadAll();
+renderDash();
+renderRpt();
+</script>
+</body>
+</html>
