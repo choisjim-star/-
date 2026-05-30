@@ -452,127 +452,155 @@ function loadSheetJS(cb) {
   document.head.appendChild(s);
 }
 
-function uploadXlsx(e) {
+function uploadXlsx(e){
   const file = e.target.files[0];
   e.target.value = '';
-  if (!file) return;
-  if (!file.name.toLowerCase().endsWith('.xlsx')) {
-    alert('⚠️ .xlsx 파일만 업로드 가능합니다.\n삼성증권 앱 → 자산 → 보유종목 → 엑셀 아이콘으로 저장한 파일을 올려주세요.');
+  if(!file) return;
+  if(!file.name.toLowerCase().endsWith('.xlsx')){
+    alert('⚠️ .xlsx 파일만 업로드 가능합니다.\n각 증권사 앱 → 자산/보유종목 → 엑셀 내보내기 후 올려주세요.');
     return;
   }
-
   const ubox = document.getElementById('ubox');
   const show = (msg, type) => {
-    if (!ubox) return;
-    ubox.className = 'ubox' + (type === 'ok' ? ' ok' : type === 'err' ? ' err' : '');
+    if(!ubox) return;
+    ubox.className = 'ubox' + (type==='ok'?' ok':type==='err'?' err':'');
     ubox.innerHTML = msg;
   };
-  show('⏳ 파일 읽는 중...', '');
+  show('⏳ 파일 분석 중...', '');
 
   loadSheetJS(() => {
     const reader = new FileReader();
     reader.onload = ev => {
       try {
-        // ── SheetJS로 읽기 (raw:false → 숫자도 포맷된 문자열로)
-        const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+        const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array'});
         const ws = wb.Sheets[wb.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
+        const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:'', raw:false});
 
-        // ── 1행: 기준 날짜
+        // 1. 기준일 (1행)
         const baseDate = rows[0] ? String(rows[0][0]).split(' ')[0] : '';
 
-        // ── 헤더 행 탐색: "계좌번호" 텍스트가 있는 행
+        // 2. 헤더 행 탐색: '종목명' 셀이 있는 행
         let hi = -1;
-        for (let i = 0; i < rows.length; i++) {
-          if (rows[i].some(c => String(c).trim() === '계좌번호')) { hi = i; break; }
+        for(let i = 0; i < Math.min(rows.length, 10); i++){
+          if(rows[i].some(c => String(c).trim() === '종목명')){ hi = i; break; }
         }
-        if (hi < 0) {
-          show('❌ 파일 형식 오류 — 삼성증권 보유종목 엑셀만 지원합니다', 'err');
-          alert('❌ 삼성증권 보유종목 형식이 아닙니다.\n\n삼성증권 앱 → 자산 → 보유종목\n→ 우측 상단 엑셀 아이콘(📊) → 저장');
+        if(hi < 0){
+          show('❌ 인식 불가 — "종목명" 컬럼이 없습니다', 'err');
+          alert('❌ 지원하지 않는 형식입니다.\n\n지원 증권사:\n삼성·키움·미래에셋·한국투자·NH·신한·KB·토스\n\n앱에서 "보유종목 엑셀 내보내기"로 저장한 파일을 올려주세요.');
           return;
         }
 
-        // ── 헬퍼
-        const toNum = v => {
-          const n = parseFloat(String(v == null ? '' : v).replace(/,/g, '').trim());
-          return isNaN(n) ? 0 : n;
+        const headers = rows[hi].map(c => String(c).trim());
+
+        // 3. 컬럼 자동 매핑 (증권사마다 다른 이름 처리)
+        const findCol = (...kws) => {
+          for(const kw of kws){
+            const idx = headers.findIndex(h => h.includes(kw));
+            if(idx >= 0) return idx;
+          }
+          return -1;
         };
+
+        const COL = {
+          acct: findCol('계좌번호', '계좌'),
+          name: findCol('종목명'),
+          qty:  findCol('잔고수량', '보유수량', '수량'),
+          cost: findCol('매수금액', '매입금액', '매입가합계', '매입총액'),
+          eval: findCol('평가금액'),
+        };
+
+        if(COL.name < 0 || COL.eval < 0){
+          show('❌ 필수 컬럼(종목명, 평가금액)을 찾지 못했습니다', 'err');
+          alert('❌ "종목명"과 "평가금액" 컬럼이 필요합니다.\n\n현재 인식된 컬럼:\n' + headers.join(', '));
+          return;
+        }
+
+        // 4. 증권사 감지
+        let broker = '증권사';
+        if(COL.acct >= 0){
+          const s = String(rows[hi+1]?.[COL.acct]||'');
+          if(s.includes('삼성')||s.includes('연금저축')||s.includes('ISA')||s.includes('IRP')) broker = '삼성증권';
+        } else if(headers.includes('종목코드')){
+          broker = '증권사(계좌분류없음)';
+        }
+
+        // 5. 계좌 타입 분류
         const acctOf = s => {
-          if (/연금저축|연금CMA/i.test(s)) return 'PENSION';
-          if (/IRP|퇴직연금/i.test(s))    return 'IRP';
-          if (/ISA/i.test(s))             return 'ISA';
+          if(/연금저축|연금CMA/i.test(s)) return 'PENSION';
+          if(/IRP|퇴직연금/i.test(s))    return 'IRP';
+          if(/ISA/i.test(s))             return 'ISA';
           return 'CMA';
         };
-        const SKIP = ['현금잔고', '예수금', '외화예수금', '현금성자산', 'WRAP'];
 
-        // ── 기존 배당률 보존
+        const SKIP = ['현금잔고','예수금','외화예수금','현금성자산','WRAP','USD(','EUR(','예탁금'];
+        const toNum = v => {
+          const n = parseFloat(String(v==null?'':v).replace(/,/g,'').trim());
+          return isNaN(n) ? 0 : n;
+        };
+
         const divMap = {};
-        S.holdings.forEach(h => { divMap[h.name] = h.divrate || 0; });
+        S.holdings.forEach(h => { divMap[h.name] = h.divrate||0; });
 
         const newH = [];
-        const newC = { PENSION: 0, IRP: 0, ISA: 0, CMA: 0 };
+        const newC = {PENSION:0, IRP:0, ISA:0, CMA:0};
 
-        rows.slice(hi + 1).forEach(row => {
-          const acctRaw = String(row[0] || '').trim();
-          const name    = String(row[1] || '').trim();
-          if (!acctRaw || !name) return;
-          if (SKIP.some(k => name.includes(k))) return;
+        rows.slice(hi+1).forEach(row => {
+          const name = String(row[COL.name]||'').trim();
+          if(!name || SKIP.some(k => name.includes(k))) return;
 
-          const acct    = acctOf(acctRaw);
-          const qty     = toNum(row[3]);
-          // ★ 핵심: 평가금액(col6)·매수금액(col5)은 항상 원화 기준으로 정확함
-          //   현재가·평단가는 이 두 값에서 역산 (달러/원화 혼동 없음)
-          const costAmt = toNum(row[5]);   // 매수금액 (원화)
-          const evalAmt = toNum(row[6]);   // 평가금액 (원화)
+          const qty     = COL.qty >= 0 ? toNum(row[COL.qty]) : 0;
+          const evalAmt = toNum(row[COL.eval]);
+          const costAmt = COL.cost >= 0 ? toNum(row[COL.cost]) : 0;
 
-          if (evalAmt <= 0 && costAmt <= 0) return;
+          if(evalAmt <= 0 && costAmt <= 0) return;
 
-          // 현재가(원화) = 평가금액 ÷ 수량
-          const curKRW = qty > 0 ? evalAmt / qty : 0;
-          // 평단가(원화) = 매수금액 ÷ 수량
-          const avgKRW = qty > 0 ? (costAmt > 0 ? costAmt : evalAmt) / qty : 0;
+          const acctRaw = COL.acct >= 0 ? String(row[COL.acct]||'') : '';
+          const acct    = acctRaw ? acctOf(acctRaw) : 'CMA';
+          const basis   = costAmt > 0 ? costAmt : evalAmt;
+          const curKRW  = qty > 0 ? evalAmt / qty : evalAmt;
+          const avgKRW  = qty > 0 ? basis / qty : basis;
 
-          // 통화는 항상 KRW (금액은 이미 원화로 저장)
-          // evH()·coH() 함수에서 currency=KRW이면 그대로 계산함
-          newC[acct] += costAmt > 0 ? costAmt : evalAmt;
+          newC[acct] += basis;
           newH.push({
             id:       uuid(),
             acct,
-            ticker:   name.replace(/\s/g, '').slice(0, 12),
+            ticker:   name.replace(/\s/g,'').slice(0,12),
             name,
             qty,
-            avg:      avgKRW,   // 원화 평단가
-            cur:      curKRW,   // 원화 현재가 (역산)
-            currency: 'KRW',    // 항상 KRW — 금액은 이미 원화
-            divrate:  divMap[name] || 0,
+            avg:      avgKRW,
+            cur:      curKRW,
+            currency: 'KRW',
+            divrate:  divMap[name]||0,
           });
         });
 
-        if (newH.length === 0) {
-          show('❌ 종목을 찾지 못했습니다. 파일을 확인해주세요.', 'err');
-          alert('❌ 종목이 없습니다.\n파일이 올바른지 확인해주세요.');
+        if(newH.length === 0){
+          show('❌ 종목을 찾지 못했습니다', 'err');
+          alert('❌ 파싱된 종목이 없습니다.\n보유 종목이 있는 파일인지 확인해주세요.');
           return;
         }
 
-        // ── 저장
         S.holdings  = newH;
         S.costs     = newC;
-        const today = new Date().toISOString().slice(0, 10);
+        const today = new Date().toISOString().slice(0,10);
         const evT   = totalEval();
         const si    = S.snapshots.findIndex(s => s.date === today);
-        if (si >= 0) S.snapshots[si].val = Math.round(evT);
-        else S.snapshots.push({ date: today, val: Math.round(evT) });
-        if (S.snapshots.length > 365) S.snapshots = S.snapshots.slice(-365);
+        if(si >= 0) S.snapshots[si].val = Math.round(evT);
+        else S.snapshots.push({date:today, val:Math.round(evT)});
+        if(S.snapshots.length > 365) S.snapshots = S.snapshots.slice(-365);
         saveAll();
 
-        show('✅ <b>업로드 완료!</b> ' + newH.length + '개 종목 · 총 평가금액 ₩' + fmt(evT) + '  (기준: ' + baseDate + ')', 'ok');
+        show('✅ <b>업로드 완료!</b> [' + broker + '] ' + newH.length + '개 종목 · 총 ₩' + fmt(evT) + '  (기준: ' + baseDate + ')', 'ok');
         renderDash();
-        alert('✅ 업로드 성공!\n\n종목 수: ' + newH.length + '개\n총 평가금액: ₩' + fmt(evT) + '\n기준일: ' + baseDate + '\n\n💡 배당수익률은 보유종목 탭에서\n종목명 클릭 후 수정할 수 있습니다.');
+        if(typeof updateAnalysisBar==='function') updateAnalysisBar();
+        if(typeof updatePensionSummary==='function') updatePensionSummary();
 
-      } catch (err) {
-        console.error('XLSX 파싱 오류:', err);
+        alert('✅ 업로드 성공!\n\n증권사: ' + broker + '\n종목 수: ' + newH.length + '개\n총 평가금액: ₩' + fmt(evT) + '\n\n💡 배당수익률은 보유종목 탭 → 종목명 클릭 후 수정 가능합니다.\n💡 삼성증권 외 증권사는 계좌 구분이 없어 전체가 종합(CMA)으로 표시됩니다.');
+
+      } catch(err){
+        console.error('파싱 오류:', err);
         show('❌ 파싱 실패: ' + err.message, 'err');
-        alert('❌ 파일 읽기 실패\n오류: ' + err.message + '\n\n삼성증권 앱에서 내보낸 .xlsx 파일인지 확인해주세요.');
+        alert('❌ 파일 읽기 실패\n오류: ' + err.message);
       }
     };
     reader.readAsArrayBuffer(file);
