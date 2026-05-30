@@ -12,12 +12,14 @@
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;transition:background .3s,color .3s}
 .abar{background:linear-gradient(90deg,#1e3a5f,#1e4d8c);color:#e0eaff;font-size:12px;padding:7px 16px;display:flex;align-items:center;gap:8px;line-height:1.5}
 .abar-tag{background:rgba(255,255,255,.18);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;flex-shrink:0}
-.topbar{position:sticky;top:0;z-index:100;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;height:50px;gap:10px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
-.logo{font-size:13px;font-weight:700;color:var(--blue);white-space:nowrap}
+.topbar{position:sticky;top:0;z-index:100;background:var(--bg2);border-bottom:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.topbar-row1{display:flex;align-items:center;padding:0 12px;height:46px;gap:8px}
+.topbar-row2{display:flex;align-items:center;padding:0 8px 6px;gap:2px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.topbar-row2::-webkit-scrollbar{display:none}
+.logo{font-size:13px;font-weight:700;color:var(--blue);white-space:nowrap;flex:1}
 .logo em{color:var(--text);font-style:normal}
-.nav{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;flex:1}
-.nav::-webkit-scrollbar{display:none}
-.nb{padding:5px 10px;border-radius:var(--rs);border:none;background:none;color:var(--text2);font-size:12px;cursor:pointer;white-space:nowrap;transition:all .15s}
+.nav{display:contents}
+.nb{padding:6px 11px;border-radius:20px;border:none;background:none;color:var(--text2);font-size:12px;cursor:pointer;white-space:nowrap;transition:all .15s;flex-shrink:0}
 .nb.on{background:var(--bl);color:var(--blue);font-weight:700}
 .nb:hover:not(.on){background:var(--bg3)}
 .tr{display:flex;align-items:center;gap:6px;flex-shrink:0}
@@ -146,20 +148,24 @@ input:checked+.ttrack:before{transform:translateX(14px)}
 </div>
 
 <div class="topbar">
-  <div class="logo">💰 <em>Pension Dashboard</em></div>
-  <nav class="nav">
-    <button class="nb on" onclick="goP('dashboard')">📊 대시보드</button>
-    <button class="nb" onclick="goP('holdings')">📋 보유종목</button>
-    <button class="nb" onclick="goP('rebalance')">⚖️ 리밸런싱</button>
-    <button class="nb" onclick="goP('dividend')">💵 배당분석</button>
-    <button class="nb" onclick="goP('retire')">🏖️ 노후분석</button>
-    <button class="nb" onclick="goP('report')">🤖 AI리포트</button>
-  </nav>
-  <div class="tr">
-    <button class="ubtn" onclick="document.getElementById('xlsx-file').click()">📂 계좌 업로드</button>
-    <input type="file" id="xlsx-file" accept=".xlsx" style="display:none" onchange="uploadXlsx(event)">
-    <button class="dbtn" onclick="resetAll()" title="데이터 초기화" style="color:var(--red)">🗑️</button>
-    <button class="dbtn" onclick="toggleDark()" id="dico">🌙</button>
+  <div class="topbar-row1">
+    <div class="logo">💰 <em>Pension Dashboard</em></div>
+    <div class="tr">
+      <button class="ubtn" onclick="document.getElementById('xlsx-file').click()">📂 업로드</button>
+      <input type="file" id="xlsx-file" accept=".xlsx" style="display:none" onchange="uploadXlsx(event)">
+      <button class="dbtn" onclick="resetAll()" title="데이터 초기화" style="color:var(--red)">🗑️</button>
+      <button class="dbtn" onclick="toggleDark()" id="dico">🌙</button>
+    </div>
+  </div>
+  <div class="topbar-row2">
+    <nav class="nav">
+      <button class="nb on" onclick="goP('dashboard')">📊 대시보드</button>
+      <button class="nb" onclick="goP('holdings')">📋 보유종목</button>
+      <button class="nb" onclick="goP('rebalance')">⚖️ 리밸런싱</button>
+      <button class="nb" onclick="goP('dividend')">💵 배당분석</button>
+      <button class="nb" onclick="goP('retire')">🏖️ 노후분석</button>
+      <button class="nb" onclick="goP('report')">🤖 AI리포트</button>
+    </nav>
   </div>
 </div>
 
